@@ -161,7 +161,7 @@ systemctl status firewalld
 ```
 - добавляем в __/etc/fstab__ строку_
 ```
-echo "192.168.50.10:/srv/share/ /mnt nfs vers=3,proto=udp,noauto,xsystemd.automount 0 0" >> /etc/fstab
+echo "192.168.50.10:/srv/share/ /mnt nfs vers=3,proto=udp,noauto,x-systemd.automount 0 0" >> /etc/fstab
 ```
 и выполняем
 ```bash
