@@ -8,11 +8,13 @@ Vagrant.configure(2) do |config|
       v.cpus = 1
   end
     config.vm.define "nfss" do |nfss|
+        nfss.vm.synced_folder ".", "/vagrant", disabled: true
         nfss.vm.network "private_network", ip: "192.168.50.10",
         virtualbox__intnet: "net1"
         nfss.vm.hostname = "nfss"
     end
     config.vm.define "nfsc" do |nfsc|
+        nfsc.vm.synced_folder ".", "/vagrant", disabled: true
         nfsc.vm.network "private_network", ip: "192.168.50.11",
         virtualbox__intnet: "net1"
         nfsc.vm.hostname = "nfsc"
