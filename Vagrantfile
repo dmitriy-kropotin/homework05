@@ -12,11 +12,13 @@ Vagrant.configure(2) do |config|
         nfss.vm.network "private_network", ip: "192.168.50.10",
         virtualbox__intnet: "net1"
         nfss.vm.hostname = "nfss"
+	nfss.vm.provision "shell", path: "nfsserver.sh"
     end
     config.vm.define "nfsc" do |nfsc|
         nfsc.vm.synced_folder ".", "/vagrant", disabled: true
         nfsc.vm.network "private_network", ip: "192.168.50.11",
         virtualbox__intnet: "net1"
         nfsc.vm.hostname = "nfsc"
+	nfsc.vm.provision "shell", path: "nfsclient.sh"
         end
     end
