@@ -191,5 +191,111 @@ drwxr-xr-x. 3 nfsnobody nfsnobody 20 Feb 20 16:50 ..
 21. Файл на месте
 22. Создам файл на клиенте nfs
 ```
-
+[root@nfsc upload]# touch client_file
+[root@nfsc upload]# ls -la
+total 0
+drwxrwxrwx. 2 nfsnobody nfsnobody 43 Feb 20 17:29 .
+drwxr-xr-x. 3 nfsnobody nfsnobody 20 Feb 20 16:50 ..
+-rw-r--r--. 1 root      root       0 Feb 20 17:26 check_file
+-rw-r--r--. 1 nfsnobody nfsnobody  0 Feb 20 17:29 client_file
 ```
+23. Проверяю на сервере nfs
+```
+[root@nfss upload]# ls -la
+total 0
+drwxrwxrwx. 2 nfsnobody nfsnobody 43 Feb 20 17:29 .
+drwxr-xr-x. 3 nfsnobody nfsnobody 20 Feb 20 16:50 ..
+-rw-r--r--. 1 root      root       0 Feb 20 17:26 check_file
+-rw-r--r--. 1 nfsnobody nfsnobody  0 Feb 20 17:29 client_file
+```
+24. Перезагружаю клиента nfs и после проверяю работоспособность папки /mnt/upload
+```
+[root@nfsc upload]# reboot
+Connection to 127.0.0.1 closed by remote host.
+Connection to 127.0.0.1 closed.
+[tesla@ol85 homework05]$ vagrant ssh nfsc
+Last login: Sun Feb 20 16:56:25 2022 from 10.0.2.2
+[vagrant@nfsc ~]$ cd /mnt/upload/
+[vagrant@nfsc upload]$ ls -la
+total 0
+drwxrwxrwx. 2 nfsnobody nfsnobody 43 Feb 20 17:29 .
+drwxr-xr-x. 3 nfsnobody nfsnobody 20 Feb 20 16:50 ..
+-rw-r--r--. 1 root      root       0 Feb 20 17:26 check_file
+-rw-r--r--. 1 nfsnobody nfsnobody  0 Feb 20 17:29 client_file
+```
+25. Перезагружаю сервер nfs и после проверяю работоспособность. Сначала файлы и папки
+```
+root@nfss upload]# reboot
+Connection to 127.0.0.1 closed by remote host.
+Connection to 127.0.0.1 closed.
+[tesla@ol85 homework05]$ vagrant ssh nfss
+Last login: Sun Feb 20 16:36:35 2022 from 10.0.2.2
+[vagrant@nfss ~]$ ls -la /svr/share/upload
+ls: cannot access /svr/share/upload: No such file or directory
+[vagrant@nfss ~]$ ls -la /srv/share/upload
+total 0
+drwxrwxrwx. 2 nfsnobody nfsnobody 43 Feb 20 17:29 .
+drwxr-xr-x. 3 nfsnobody nfsnobody 20 Feb 20 16:50 ..
+-rw-r--r--. 1 root      root       0 Feb 20 17:26 check_file
+-rw-r--r--. 1 nfsnobody nfsnobody  0 Feb 20 17:29 client_file
+```
+26. Службы
+```
+[vagrant@nfss ~]$ systemctl status nfs
+● nfs-server.service - NFS server and services
+   Loaded: loaded (/usr/lib/systemd/system/nfs-server.service; enabled; vendor preset: disabled)
+  Drop-In: /run/systemd/generator/nfs-server.service.d
+           └─order-with-mounts.conf
+   Active: active (exited) since Sun 2022-02-20 17:41:14 UTC; 6min ago
+  Process: 833 ExecStartPost=/bin/sh -c if systemctl -q is-active gssproxy; then systemctl reload gssproxy ; fi (code=exited, status=0/SUCCESS)
+  Process: 805 ExecStart=/usr/sbin/rpc.nfsd $RPCNFSDARGS (code=exited, status=0/SUCCESS)
+  Process: 803 ExecStartPre=/usr/sbin/exportfs -r (code=exited, status=0/SUCCESS)
+ Main PID: 805 (code=exited, status=0/SUCCESS)
+   CGroup: /system.slice/nfs-server.service
+[vagrant@nfss ~]$ systemctl status firewalld
+● firewalld.service - firewalld - dynamic firewall daemon
+   Loaded: loaded (/usr/lib/systemd/system/firewalld.service; enabled; vendor preset: enabled)
+   Active: active (running) since Sun 2022-02-20 17:41:10 UTC; 6min ago
+     Docs: man:firewalld(1)
+ Main PID: 404 (firewalld)
+   CGroup: /system.slice/firewalld.service
+           └─404 /usr/bin/python2 -Es /usr/sbin/firewalld --nofork --nopid
+```
+27. Экспорты
+```
+[vagrant@nfss ~]$ exportfs -s
+exportfs: could not open /var/lib/nfs/.etab.lock for locking: errno 13 (Permission denied)
+[vagrant@nfss ~]$ sudo -i
+[root@nfss ~]# exportfs -s
+/srv/share  192.168.50.11/32(sync,wdelay,hide,no_subtree_check,sec=sys,rw,secure,root_squash,no_all_squash)
+```
+28. Работоспособность RPC
+```
+[root@nfss ~]# showmount -a
+All mount points on nfss:
+192.168.50.11:/srv/share
+```
+29. Проверяю работоспособность RPC с клиента NFS
+```
+[vagrant@nfsc upload]$ showmount -a 192.168.50.10
+All mount points on 192.168.50.10:
+192.168.50.11:/srv/share
+```
+30. Проверяю монтирование на клиенте NFS
+```
+[vagrant@nfsc upload]$ mount | grep mnt
+systemd-1 on /mnt type autofs (rw,relatime,fd=26,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=10868)
+192.168.50.10:/srv/share/ on /mnt type nfs (rw,relatime,vers=3,rsize=32768,wsize=32768,namlen=255,hard,proto=udp,timeo=11,retrans=3,sec=sys,mountaddr=192.168.50.10,mountvers=3,mountport=20048,mountproto=udp,local_lock=none,addr=192.168.50.10)
+```
+31. Создаю еще один тестовый файл и проверяю
+```
+[vagrant@nfsc upload]$ touch final_check
+[vagrant@nfsc upload]$ ls -la
+total 0
+drwxrwxrwx. 2 nfsnobody nfsnobody 62 Feb 20 17:54 .
+drwxr-xr-x. 3 nfsnobody nfsnobody 20 Feb 20 16:50 ..
+-rw-r--r--. 1 root      root       0 Feb 20 17:26 check_file
+-rw-r--r--. 1 nfsnobody nfsnobody  0 Feb 20 17:29 client_file
+-rw-rw-r--. 1 vagrant   vagrant    0 Feb 20 17:54 final_check
+```
+32. Видно, что владельцы файлов разные.
