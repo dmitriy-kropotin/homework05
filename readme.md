@@ -89,3 +89,47 @@ udp    UNCONN     0      0      [::]:111                [::]:*                  
 tcp    LISTEN     0      128       *:111                   *:*                   users:(("rpcbind",pid=347,fd=8))
 tcp    LISTEN     0      128    [::]:111                [::]:*                   users:(("rpcbind",pid=347,fd=11))
 ```
+9. Создаю директорию и настраиваю права доступа. Для дальнейшего доступа через nfs
+```
+[root@nfss ~]# mkdir -p /srv/share/upload
+[root@nfss ~]# chown -R nfsnobody:nfsnobody /srv/share
+[root@nfss ~]# chmod 0777 /srv/share/upload
+```
+10. Настриваю директорию в /etc/exports
+```
+[root@nfss ~]# cat << EOF > /etc/exports
+> /srv/share 192.168.50.11/32(rw,sync,root_squash)
+> EOF
+[root@nfss ~]# cat /etc/exports
+/srv/share 192.168.50.11/32(rw,sync,root_squash)
+```
+11. Выгружаю exports и проверяю
+```
+[root@nfss ~]# exportfs -r
+[root@nfss ~]# exportfs -s
+/srv/share  192.168.50.11/32(sync,wdelay,hide,no_subtree_check,sec=sys,rw,secure,root_squash,no_all_squash)
+```
+12. Настройки сервера nfs выполнены, подключаюсь к клиенту nfs, и захожу под root
+```
+[tesla@ol85 homework05]$ vagrant ssh nfsc
+[vagrant@nfsc ~]$ sudo -i
+```
+13. Устанавливаю/обновляю nfs-utils
+```
+[root@nfsc ~]# yum install nfs-utils
+...
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  Updating   : 1:nfs-utils-1.3.0-0.68.el7.2.x86_64                                                                      1/2
+  Cleanup    : 1:nfs-utils-1.3.0-0.66.el7.x86_64                                                                        2/2
+  Verifying  : 1:nfs-utils-1.3.0-0.68.el7.2.x86_64                                                                      1/2
+  Verifying  : 1:nfs-utils-1.3.0-0.66.el7.x86_64                                                                        2/2
+
+Updated:
+  nfs-utils.x86_64 1:1.3.0-0.68.el7.2
+
+Complete!
+```
+14.
