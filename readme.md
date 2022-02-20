@@ -299,3 +299,10 @@ drwxr-xr-x. 3 nfsnobody nfsnobody 20 Feb 20 16:50 ..
 -rw-rw-r--. 1 vagrant   vagrant    0 Feb 20 17:54 final_check
 ```
 32. Видно, что владельцы файлов разные.
+33. Выключил сервер nfs, и так как на клиенте nfs был в папке upload, сразу получил зависание на команде выключения клиента
+```
+vagrant@nfsc upload]$ halt
+^C
+^C
+^C
+```
