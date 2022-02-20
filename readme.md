@@ -132,4 +132,64 @@ Updated:
 
 Complete!
 ```
-14.
+14. Включаю firewall и проверяю
+```
+[root@nfsc ~]# systemctl enable firewalld --now
+Created symlink from /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service to /usr/lib/systemd/system/firewalld.service.
+Created symlink from /etc/systemd/system/multi-user.target.wants/firewalld.service to /usr/lib/systemd/system/firewalld.service.
+[root@nfsc ~]# systemctl status firewalld
+● firewalld.service - firewalld - dynamic firewall daemon
+   Loaded: loaded (/usr/lib/systemd/system/firewalld.service; enabled; vendor preset: enabled)
+   Active: active (running) since Sun 2022-02-20 17:00:36 UTC; 2s ago
+     Docs: man:firewalld(1)
+ Main PID: 2906 (firewalld)
+   CGroup: /system.slice/firewalld.service
+           └─2906 /usr/bin/python2 -Es /usr/sbin/firewalld --nofork --nopid
+
+Feb 20 17:00:36 nfsc systemd[1]: Starting firewalld - dynamic firewall daemon...
+Feb 20 17:00:36 nfsc systemd[1]: Started firewalld - dynamic firewall daemon.
+Feb 20 17:00:36 nfsc firewalld[2906]: WARNING: AllowZoneDrifting is enabled. This is considered an insecure configu...t now.
+Hint: Some lines were ellipsized, use -l to show in full.
+```
+15. Добавляю монтирование в fstab
+```
+[root@nfsc ~]# echo "192.168.50.10:/srv/share/ /mnt nfs vers=3,proto=udp,noauto,x-systemd.automount 0 0" >> /etc/fstab
+```
+16. Перезагружаю systemctl и службу remote-fs
+```
+[root@nfsc ~]# systemctl daemon-reload
+[root@nfsc ~]# systemctl restart remote-fs.target
+```
+17. Так как в монтировании есть опция `noauto`, то для подключения share необходимо зайти в /mnt/ и потом проверяю монтирование
+```
+[root@nfsc ~]# cd /mnt
+[root@nfsc mnt]# mount | grep mnt
+systemd-1 on /mnt type autofs (rw,relatime,fd=46,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=25749)
+192.168.50.10:/srv/share/ on /mnt type nfs (rw,relatime,vers=3,rsize=32768,wsize=32768,namlen=255,hard,proto=udp,timeo=11,retrans=3,sec=sys,mountaddr=192.168.50.10,mountvers=3,mountport=20048,mountproto=udp,local_lock=none,addr=192.168.50.10)
+
+```
+18. По выводу видно, что используется udp и версия nfs v3
+19. Проверяю работоспособность стенда. Создам файл на сервере nfs
+```
+[root@nfss ~]# cd /srv/share/upload/
+[root@nfss upload]# touch check_file
+[root@nfss upload]# ls -la
+total 0
+drwxrwxrwx. 2 nfsnobody nfsnobody 24 Feb 20 17:26 .
+drwxr-xr-x. 3 nfsnobody nfsnobody 20 Feb 20 16:50 ..
+-rw-r--r--. 1 root      root       0 Feb 20 17:26 check_file
+```
+20. Проверю его на клиенте nfs (на нем мы уже в папке /mnt)
+```
+[root@nfsc mnt]# cd upload/
+[root@nfsc upload]# ls -la
+total 0
+drwxrwxrwx. 2 nfsnobody nfsnobody 24 Feb 20 17:26 .
+drwxr-xr-x. 3 nfsnobody nfsnobody 20 Feb 20 16:50 ..
+-rw-r--r--. 1 root      root       0 Feb 20 17:26 check_file
+```
+21. Файл на месте
+22. Создам файл на клиенте nfs
+```
+
+```
